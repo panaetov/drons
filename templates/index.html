@@ -1,0 +1,175 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Поиск маячка</title>
+
+  <!-- Leaflet CSS -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+
+  <style>
+    body {
+      margin: 0;
+      padding: 0;
+      font-family: Arial, sans-serif;
+    }
+    #controls {
+      position: absolute;
+      top: 10px;
+      right: 10px; /* ← переместили вправо */
+      z-index: 1000;
+      background: white;
+      padding: 12px;
+      border-radius: 8px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.2);
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+    #map {
+      height: 100vh;
+      width: 100%;
+    }
+    input, button {
+      padding: 8px 12px;
+      font-size: 14px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+    }
+    input {
+      width: 180px;
+    }
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+      font-weight: bold;
+    }
+    button:hover {
+      background: #0056b3;
+    }
+    #status {
+      font-size: 12px;
+      color: #555;
+      min-height: 18px;
+    }
+    .drone-marker {
+      background: #007bff;
+      border-radius: 50%;
+      width: 12px;
+      height: 12px;
+      margin: -6px 0 0 -6px;
+    }
+  </style>
+</head>
+<body>
+
+<div id="controls">
+  <label for="beaconId" style="font-weight: bold; margin-bottom: 4px;">ID маячка:</label>
+  <input type="text" id="beaconId" placeholder="Введите beacon_id" />
+  <button onclick="fetchBeaconData()">Найти</button>
+  <div id="status"></div>
+</div>
+
+<div id="map"></div>
+
+<!-- Leaflet JS -->
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+
+<script>
+  // Инициализация карты
+  const map = L.map('map').setView([55.751244, 37.618423], 12); // Москва по умолчанию
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+  }).addTo(map);
+
+  let beaconMarker = null;
+  let droneMarkers = [];
+
+  // Кастомная иконка для дрона
+  const droneIcon = L.divIcon({
+    className: 'drone-marker',
+    iconSize: [12, 12]
+  });
+
+  function clearMap() {
+    if (beaconMarker) {
+      map.removeLayer(beaconMarker);
+      beaconMarker = null;
+    }
+    droneMarkers.forEach(marker => map.removeLayer(marker));
+    droneMarkers = [];
+  }
+
+  async function fetchBeaconData() {
+    const beaconId = document.getElementById('beaconId').value.trim();
+    const statusDiv = document.getElementById('status');
+
+    if (!beaconId) {
+      statusDiv.textContent = 'Введите ID маячка';
+      return;
+    }
+
+    clearMap();
+    statusDiv.textContent = 'Загрузка...';
+
+    try {
+      const response = await fetch(`/api/beacon/${encodeURIComponent(beaconId)}`);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const data = await response.json();
+
+      // Маячок
+      if (data.beacon && data.beacon.lat && data.beacon.lon) {
+        beaconMarker = L.circleMarker(
+          [data.beacon.lat, data.beacon.lon],
+          {
+            radius: 10,
+            color: '#d32f2f',
+            fillColor: '#ff6b6b',
+            fillOpacity: 0.8,
+            weight: 2
+          }
+        ).addTo(map);
+        beaconMarker.bindPopup(`Маячок: ${beaconId},<br>lat=${data.beacon.lat},<br>lon=${data.beacon.lon}`).openPopup();
+      }
+
+      // Дроны
+      if (Array.isArray(data.drones)) {
+        data.drones.forEach(drone => {
+          if (drone.lat && drone.lon) {
+            const marker = L.marker([drone.lat, drone.lon], { icon: droneIcon })
+              .addTo(map)
+              .bindPopup(`Дрон: ${drone.drone_id}<br>TDOA: ${drone.tdoa} ns<br>lat=${dron.lat}<br>lon=${dron.lon}`);
+            droneMarkers.push(marker);
+          }
+        });
+      }
+
+      // Центрирование
+      if (data.beacon) {
+        map.setView([data.beacon.lat, data.beacon.lon], 14);
+      } else if (data.drones?.length > 0) {
+        const first = data.drones[0];
+        map.setView([first.lat, first.lon], 13);
+      }
+
+      statusDiv.textContent = `Найдено: ${data.drones?.length || 0} дронов`;
+    } catch (error) {
+      console.error('Ошибка:', error);
+      statusDiv.textContent = `Ошибка: ${error.message}`;
+    }
+  }
+
+  // Поддержка Enter
+  document.getElementById('beaconId').addEventListener('keypress', (e) => {
+    if (e.key === 'Enter') fetchBeaconData();
+  });
+</script>
+
+</body>
+</html>

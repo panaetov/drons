@@ -1,0 +1,29 @@
+version: '3.8'
+
+services:
+  mqtt-broker:
+    image: eclipse-mosquitto:2.0
+    container_name: mosquitto
+    ports:
+      - "1883:1883"   # MQTT (незашифрованный)
+      - "9001:9001"   # MQTT over WebSockets (опционально)
+    volumes:
+      - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./data:/mosquitto/data
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_DB: drones
+      POSTGRES_USER: dude
+      POSTGRES_PASSWORD: dude
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+volumes:
+  postgres_data:
+
