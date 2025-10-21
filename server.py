@@ -36,6 +36,7 @@ class DronePositionItemResponse(pydantic.BaseModel):
     lon: float
     drone_id: str
     tdoa: int = 0
+    tos: float = 0
 
 
 class BeaconPositionItemResponse(pydantic.BaseModel):
@@ -78,6 +79,7 @@ async def beacon_position_handler(beacon_id):
                 lat=d.receiver_lat,
                 lon=d.receiver_lon,
                 tdoa=int(10**9 * (times[n] - times[0])),
+                tos=detections[n].tos,
             )
             for n, d in enumerate(detections)
         ],

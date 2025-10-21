@@ -144,7 +144,7 @@
           if (drone.lat && drone.lon) {
             const marker = L.marker([drone.lat, drone.lon], { icon: droneIcon })
               .addTo(map)
-              .bindPopup(`Дрон: ${drone.drone_id}<br>TDOA: ${drone.tdoa} ns<br>lat=${dron.lat}<br>lon=${dron.lon}`);
+              .bindPopup(`Дрон: ${drone.drone_id}<br>TOS: ${drone.tos}<br>TDOA: ${drone.tdoa} ns<br>lat=${drone.lat}<br>lon=${drone.lon}`);
             droneMarkers.push(marker);
           }
         });

@@ -9,6 +9,7 @@ services:
       - "9001:9001"   # MQTT over WebSockets (опционально)
     volumes:
       - ./mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - ./mosquitto-passwords.txt:/mosquitto/config/password.txt:ro
       - ./data:/mosquitto/data
     restart: unless-stopped
 
