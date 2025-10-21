@@ -7,11 +7,11 @@ from geopy.distance import geodesic
 BEACON_ID = 'beacon-1'
 
 CLIENT = mqtt.Client(
-    mqtt.CallbackAPIVersion.VERSION2,
+    protocol=mqtt.MQTTv5,
     client_id="my_publisher",
 )
 
-CLIENT.connect("localhost", 1883)
+CLIENT.connect('127.0.0.1', 1883)
 
 receivers = [
     [55.751244, 37.618423],  # R0
@@ -37,7 +37,9 @@ for dron_id, (lat, lon) in enumerate(receivers):
     toa_ns = now_ns + dt_ns
     CLIENT.publish(
         "beacon/detect",
-        f"dron-{dron_id}:{lat}:{lon}:{BEACON_ID}:{now_ns}:{toa_ns}"
+        f"dron-{dron_id}:{lat}:{lon}:{BEACON_ID}:{now_ns}:{toa_ns}",
+        qos=1,
+
     )
 
 CLIENT.disconnect()

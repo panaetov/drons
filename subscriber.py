@@ -15,6 +15,10 @@ logger = logging.getLogger(__name__)
 logger.setLevel('DEBUG')
 
 
+def on_connect(client, userdata, flags, reason_code, properties=None):
+    client.subscribe("beacon/detect", qos=1)
+
+
 def on_message(_, __, msg):
     drone_id, lat, lon, beacon_id, tos, toa = msg.payload.decode().split(":")[:6]
 
@@ -31,11 +35,12 @@ def on_message(_, __, msg):
 
 
 CLIENT = mqtt.Client(
-    mqtt.CallbackAPIVersion.VERSION2,
+    protocol=mqtt.MQTTv5,
+    callback_api_version=mqtt.CallbackAPIVersion.VERSION2,
     client_id="subscriber",
 )
 CLIENT.on_message = on_message
-CLIENT.connect("localhost", 1883)
-CLIENT.subscribe("beacon/detect")
+CLIENT.on_connect = on_connect
 
+CLIENT.connect("localhost", 1883)
 CLIENT.loop_forever()
