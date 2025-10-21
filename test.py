@@ -3,6 +3,8 @@ import time
 import paho.mqtt.client as mqtt
 from geopy.distance import geodesic
 
+IP = '127.0.0.1'
+IP = '89.169.181.181'
 
 BEACON_ID = 'beacon-1'
 
@@ -11,7 +13,7 @@ CLIENT = mqtt.Client(
     client_id="my_publisher",
 )
 
-CLIENT.connect("localhost", 1883)
+CLIENT.connect(IP, 1883)
 
 receivers = [
     [55.751244, 37.618423],  # R0
