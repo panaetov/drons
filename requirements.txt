@@ -3,3 +3,7 @@ psycopg2-binary
 pyproj
 pydantic
 geopy
+numpy
+fastapi
+scipy
+jinja2
